@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Aisle Lab Lite</title>
+    <script src="tableau.extensions.1.latest.js"></script>
+    <script src="main.js"></script>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 12px; color: #1f2430; background: #eef0f4; }
+      #app { position: fixed; inset: 0; display: flex; }
+      #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      #bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; background: #fff; border-bottom: 1px solid #d5d9e0; }
+      #bar .title { font-weight: 700; font-size: 13px; margin-right: 8px; }
+      button { font: inherit; border: 1px solid #aeb5c2; background: #fff; border-radius: 4px; padding: 3px 9px; cursor: pointer; color: #1f2430; }
+      button:hover:not(:disabled) { background: #e8edf7; }
+      button:disabled { opacity: .45; cursor: default; }
+      button.on { background: #1f4e9c; color: #fff; border-color: #1f4e9c; }
+      button.primary { background: #1f4e9c; color: #fff; border-color: #1f4e9c; }
+      .badge { padding: 2px 7px; border-radius: 10px; font-size: 11px; background: #e6f4ea; color: #14602b; }
+      .badge.warn { background: #fff1d6; color: #7a4b00; }
+      .wrap { position: relative; min-height: 0; background: #fff; border-bottom: 1px solid #d5d9e0; }
+      #elevWrap { flex: 3; }
+      #planWrap { flex: 2; }
+      canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+      .cap { position: absolute; left: 8px; top: 6px; font-weight: 700; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: #3b4455; background: rgba(255,255,255,.88); padding: 2px 6px; border-radius: 3px; pointer-events: none; }
+      #side { width: 310px; overflow-y: auto; background: #fff; border-left: 1px solid #d5d9e0; padding: 8px 10px 24px; }
+      #side h3 { margin: 12px 0 5px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #4a5468; border-bottom: 1px solid #e3e6ec; padding-bottom: 3px; }
+      .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .kpi { background: #f3f5f9; border-radius: 5px; padding: 5px 6px; }
+      .kpi .l { font-size: 10px; color: #566074; }
+      .kpi .v { font-size: 15px; font-weight: 700; }
+      .kpi .d { font-size: 11px; font-weight: 600; }
+      .pos { color: #14762f; } .neg { color: #b3261e; }
+      label.row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+      label.row input[type=range] { flex: 1; }
+      label.row span.val { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+      select { font: inherit; padding: 2px; max-width: 100%; }
+      .card { border: 1px solid #e0e4ea; border-radius: 5px; padding: 6px 7px; margin: 5px 0; background: #fafbfd; }
+      .card.flag { border-color: #e7a4a0; background: #fff6f5; }
+      .card .t { font-weight: 600; }
+      .card .s { color: #566074; font-size: 11px; margin-top: 2px; }
+      .card .b { margin-top: 4px; display: flex; gap: 5px; flex-wrap: wrap; }
+      .tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 8px; background: #fbd9d6; color: #8a1c14; margin-right: 3px; }
+      .muted { color: #6a7487; }
+      #hero { display: flex; gap: 10px; align-items: stretch; padding: 7px 10px; background: #0f2a52; color: #fff; }
+      #hero .ht { display: flex; flex-direction: column; justify-content: center; margin-right: 6px; }
+      #hero .ht .h1 { font-size: 15px; font-weight: 700; } #hero .ht .h2 { font-size: 11px; opacity: .8; }
+      #hero .ht2 { background: rgba(255,255,255,.1); border-radius: 6px; padding: 4px 12px; min-width: 150px; }
+      #hero .l { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; opacity: .8; } #hero .v { font-size: 22px; font-weight: 800; line-height: 1.15; } #hero .b { font-size: 11px; opacity: .85; }
+      #hero .d { font-size: 12px; font-weight: 700; } #hero .d.up { color: #8ff0a4; } #hero .d.dn { color: #ffb4ad; }
+      #hero button { align-self: center; margin-left: auto; }
+      #heatLegend { display: none; align-items: center; gap: 14px; padding: 4px 10px; background: #fff; border-bottom: 1px solid #d5d9e0; flex-wrap: wrap; }
+      #heatLegend .lt { display: flex; flex-direction: column; font-size: 11px; max-width: 230px; } #heatLegend .lt b { font-size: 12px; }
+      #heatLegend .sws { display: flex; gap: 3px; }
+      #heatLegend button.sw { display: flex; flex-direction: column; align-items: center; min-width: 74px; padding: 2px 6px; border: 1px solid #8d93a0; line-height: 1.2; }
+      #heatLegend button.sw .a { font-size: 10px; font-weight: 700; } #heatLegend button.sw .b { font-size: 9px; }
+      #heatLegend button.sw.on2 { outline: 3px solid #0b5fff; }
+      .scroll canvas, canvas.ch { position: static; inset: auto; width: auto; height: auto; cursor: default; display: block; }
+      .pc { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+      .pbanner { padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 8px; } .pbanner.up { background: #e6f4ea; color: #14602b; } .pbanner.dn { background: #fdeceb; color: #8a1c14; }
+      .tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 8px 0; }
+      .tile { background: #f3f5f9; border-radius: 6px; padding: 6px 9px; } .tile .l { font-size: 10px; color: #566074; text-transform: uppercase; letter-spacing: .04em; } .tile .v { font-size: 18px; font-weight: 800; } .tile .s { font-size: 11px; color: #566074; }
+      .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .tp { border: 1px solid #d5d9e0; border-left-width: 5px; border-radius: 5px; padding: 6px 9px; margin: 6px 0; background: #fff; }
+      .tp.ask { border-left-color: #1f4e9c; } .tp.give { border-left-color: #2e8b57; } .tp .t { font-weight: 700; } .tp .x { font-size: 12px; margin-top: 2px; } .tp .v { font-weight: 700; color: #14602b; font-size: 12px; margin-top: 2px; } .tp .ev { font-size: 10.5px; color: #6a7487; }
+      .role { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 10px; font-weight: 700; } .role.Feature { background: #d7e8ff; color: #123c80; } .role.Lift { background: #e0f2e6; color: #14602b; } .role.Clearance { background: #ffe9cc; color: #7a4b00; } .role.Hold { background: #fbd9d6; color: #8a1c14; }
+      table.rt tr.sel td { background: #eaf1ff; } table.rt tr.clk { cursor: pointer; }
+      .scroll h4 { margin: 14px 0 4px; font-size: 13px; }
+      table.rt th.srt { cursor: pointer; } table.rt tr.flagrow td:first-child { border-left: 3px solid #d4231a; }
+      table.rt td button { padding: 1px 6px; margin-right: 3px; font-size: 11px; }
+      #recap { position: fixed; inset: 0; z-index: 40; background: #fff; display: none; flex-direction: column; }
+      #recap .rbar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #d5d9e0; background: #f3f5f9; }
+      #recap .rbody { overflow: auto; padding: 14px 22px 40px; max-width: 980px; }
+      #recap h1 { font-size: 20px; margin: 4px 0; } #recap h2 { font-size: 15px; border-bottom: 2px solid #1f4e9c; padding-bottom: 3px; margin: 22px 0 6px; } #recap h3 { font-size: 12px; margin: 12px 0 3px; }
+      table.rt { border-collapse: collapse; width: 100%; font-size: 12px; } table.rt th, table.rt td { border: 1px solid #c9ced8; padding: 3px 6px; text-align: left; vertical-align: top; } table.rt th { background: #eef1f7; }
+      #tip { position: fixed; z-index: 20; pointer-events: none; background: rgba(20,24,34,.94); color: #fff; padding: 6px 8px; border-radius: 5px; font-size: 11px; line-height: 1.4; max-width: 260px; display: none; }
+      #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #1f2430; color: #fff; padding: 6px 12px; border-radius: 5px; display: none; z-index: 30; }
+      table.st { width: 100%; border-collapse: collapse; font-size: 11px; }
+      table.st td { padding: 1px 3px; } table.st td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="main">
+        <div id="bar"></div>
+        <div id="heatLegend"></div>
+        <div id="elevWrap" class="wrap"><canvas id="elev"></canvas><div class="cap" id="elevCap"></div></div>
+        <div id="planWrap" class="wrap"><canvas id="plan"></canvas><div class="cap" id="planCap"></div></div>
+      </div>
+    </div>
+    <div id="tip"></div><div id="toast"></div>
+  </body>
+</html>
